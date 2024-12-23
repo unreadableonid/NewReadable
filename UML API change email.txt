@@ -1,0 +1,93 @@
+@startuml
+
+actor "User" as User
+participant "UI" as UI
+participant "API Gateway" as Gateway
+participant "Сервис Пользователей" as AccountService
+database "DB Account" as DataBase
+queue "Kafka" as Broker
+participant "Сервис Уведомлений" as NotificationService
+
+User -> UI: Изменить email
+activate User
+activate UI
+
+UI -> Gateway: PATCH /api/accounts/{username}
+activate Gateway
+
+Gateway -> AccountService: PATCH /api/accounts/{username}
+activate AccountService
+
+AccountService -> AccountService: Проверка авторизации
+
+alt Неверный пароль
+
+AccountService --> UI: Пароли не совпадают
+
+UI --> User: Запрос пароля
+
+User -> UI: Ввести пароль
+
+UI -> Gateway: PATCH /api/accounts/{username}
+
+Gateway -> AccountService: PATCH /api/accounts/{username}
+
+end alt
+
+AccountService -> DataBase: Проверка email
+activate DataBase
+
+DataBase --> AccountService: Вернуть результат
+
+alt Email занят
+
+AccountService --> UI: Некорректный Email
+
+UI --> User: Email занят
+
+User -> UI: Ввести другой email
+
+UI -> Gateway: PATCH /api/accounts/{username}
+
+Gateway -> AccountService: PATCH /api/accounts/{username}
+
+end alt
+
+AccountService -> Broker: Смена email
+activate Broker
+
+AccountService --> UI: Запрос принят
+
+NotificationService --> Broker: Подписка на топик
+activate NotificationService
+
+Broker -> NotificationService: Смена email
+deactivate Broker
+
+NotificationService -> NotificationService: Отправить уведомление
+activate NotificationService
+deactivate NotificationService
+deactivate NotificationService
+
+UI --> User: Проверить email
+
+User -> UI: Подтвердить изменение
+
+UI -> Gateway: POST /api/accounts/email
+
+Gateway -> AccountService: POST /api/accounts/email
+deactivate Gateway
+
+AccountService -> DataBase: Изменить email
+
+DataBase --> AccountService: OK
+deactivate DataBase
+deactivate AccountService
+
+AccountService --> UI: OK
+
+UI --> User: Email изменен
+deactivate User
+deactivate UI
+
+@enduml
