@@ -2,7 +2,8 @@
 
 Графический UseCase:
 
-![UseCase](https://github.com/unreadableonid/NewReadable/blob/master/UseCaseMessanger.png)
+[#img-UseCase,link=https://github.com/unreadableonid/NewReadable/blob/master/UseCaseMessanger.png] 
+image::UseCaseMessanger.png[UseCase]
 
 |===
 |*Уникальный код и название* |*ВИ-1:Просмотреть свой профиль*
