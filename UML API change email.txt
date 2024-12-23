@@ -16,6 +16,7 @@ UI -> Gateway: PATCH /api/accounts/{username}
 activate Gateway
 
 Gateway -> AccountService: PATCH /api/accounts/{username}
+deactivate Gateway
 activate AccountService
 
 AccountService -> AccountService: Проверка авторизации
@@ -29,15 +30,17 @@ UI --> User: Запрос пароля
 User -> UI: Ввести пароль
 
 UI -> Gateway: PATCH /api/accounts/{username}
+activate Gateway
 
 Gateway -> AccountService: PATCH /api/accounts/{username}
-
+deactivate Gateway
 end alt
 
 AccountService -> DataBase: Проверка email
 activate DataBase
 
 DataBase --> AccountService: Вернуть результат
+deactivate DataBase
 
 alt Email занят
 
@@ -48,8 +51,10 @@ UI --> User: Email занят
 User -> UI: Ввести другой email
 
 UI -> Gateway: PATCH /api/accounts/{username}
+activate Gateway
 
 Gateway -> AccountService: PATCH /api/accounts/{username}
+deactivate Gateway
 
 end alt
 
@@ -57,6 +62,8 @@ AccountService -> Broker: Смена email
 activate Broker
 
 AccountService --> UI: Запрос принят
+deactivate UI
+deactivate AccountService
 
 NotificationService --> Broker: Подписка на топик
 activate NotificationService
@@ -70,21 +77,25 @@ deactivate NotificationService
 deactivate NotificationService
 
 UI --> User: Проверить email
+activate UI
 
 User -> UI: Подтвердить изменение
 
 UI -> Gateway: POST /api/accounts/email
+activate Gateway
 
 Gateway -> AccountService: POST /api/accounts/email
 deactivate Gateway
+activate AccountService
 
 AccountService -> DataBase: Изменить email
+activate DataBase
 
 DataBase --> AccountService: OK
 deactivate DataBase
-deactivate AccountService
 
 AccountService --> UI: OK
+deactivate AccountService
 
 UI --> User: Email изменен
 deactivate User
