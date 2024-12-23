@@ -1,4 +1,8 @@
 == Use Case
+
+Графический UseCase:
+![UseCase](https://github.com/unreadableonid/NewReadable/blob/master/UseCaseMessanger.png)
+
 |===
 |*Уникальный код и название* |*ВИ-1:Просмотреть свой профиль*
 |Контекст использования |Просмотр своего персонального профиля
