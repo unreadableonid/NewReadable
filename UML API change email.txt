@@ -58,22 +58,20 @@ deactivate Gateway
 
 end alt
 
-AccountService -> Broker: Смена email
+AccountService ->> Broker: Смена email
 activate Broker
 
 AccountService --> UI: Запрос принят
 deactivate UI
 deactivate AccountService
 
-NotificationService --> Broker: Подписка на топик
+NotificationService -->> Broker: Подписка на топик
 activate NotificationService
 
-Broker -> NotificationService: Смена email
+Broker ->> NotificationService: Смена email
 deactivate Broker
 
-NotificationService -> NotificationService: Отправить уведомление
-activate NotificationService
-deactivate NotificationService
+NotificationService --> User: Отправить уведомление
 deactivate NotificationService
 
 UI --> User: Проверить email
