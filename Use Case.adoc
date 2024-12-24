@@ -4,6 +4,7 @@
 
 [#img-UseCase,link=https://github.com/unreadableonid/NewReadable/blob/master/UseCaseMessanger.png] 
 image::UseCaseMessanger.png[UseCase]
+Рисунок 1. Диаграмма Use Case для версии 1.0 мессенджера "Придумать название"
 
 |===
 |*Уникальный код и название* |*ВИ-1:Просмотреть свой профиль*
