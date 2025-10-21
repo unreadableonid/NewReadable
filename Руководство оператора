@@ -1,0 +1,288 @@
+= Руководство оператора: Мобильное приложение управления умным домом
+:description: Техническое руководство для операторов системы умного дома. Архитектура, протоколы, диагностика и обслуживание клиентов.
+:keywords: MQTT, Zigbee, оператор умного дома, диагностика, REST API, техническая поддержка
+:toc: left
+:toclevels: 3
+:toc-title:
+:source-highlighter: highlightjs
+:revnumber: 1.0
+:revdate: 2024-12-19
+
+[#architecture]
+== Архитектура системы
+
+[#system-components]
+=== Компоненты системы
+
+*Центральный хаб (шлюз)*::
+Устройство с ARM-процессором, выполняющее роль MQTT-брокера и координатора Zigbee 3.0 сети.
+
+*Периферийные устройства*::
+- Датчики (Zigbee/Z-Wave)
+- Исполнительные устройства (Wi-Fi/Matter)
+- Камеры (RTSP/ONVIF)
+
+*Облачная инфраструктура*::
+- AWS IoT Core для управления соединениями
+- База данных TimescaleDB для телеметрии
+- Redis для кэширования состояний
+
+[#communication-protocols]
+=== Протоколы связи
+
+[listing]
+.Стек протоколов
+----
+Уровень приложения: MQTT 3.1.1/5.0 с TLS 1.3
+Транспортный уровень: WebSocket Secure (WSS)
+Сетевой уровень: IPv6 с 6LoWPAN для устройств с ограниченными ресурсами
+Физический уровень: Zigbee 3.0, Z-Wave 700 series, Wi-Fi 6
+----
+
+[#client-onboarding]
+== Процесс onboarding клиента
+
+[#registration-flow]
+=== Процедура регистрации
+
+. *Верификация устройства*
++
+[source,json]
+----
+POST /api/v1/devices/verify
+{
+  "device_id": "SN-2024-ABCD-1234",
+  "mac_address": "AA:BB:CC:DD:EE:FF",
+  "firmware_version": "2.1.4"
+}
+----
+
+. *Создание tenant* в многопользовательской архитектуре
+. *Инициализация MQTT-топиков* с префиксом клиента
+. *Настройка правил безопасности* в AWS IoT Policy
+
+[#device-provisioning]
+=== Provisioning устройств
+
+*Zigbee устройства*::
++
+zigbee2mqtt/bridge/request/permit_join
+{"value": true, "time": 240}
+
+*Wi-Fi устройства*::
++  
+Использование технологии SmartConfig для provisioning credentials через broadcast packets.
+
+[#technical-operations]
+== Технические операции
+
+[#monitoring]
+=== Мониторинг системы
+
+[source,bash]
+----
+# Проверка состояния MQTT брокера
+mosquitto_sub -h broker.iot.local -t "#" -v
+
+# Мониторинг нагрузки на базу данных
+pg_stat_statements для анализа query performance
+
+# Проверка сетевой связности устройств
+fping -f zigbee_devices.list
+----
+
+[#diagnostics]
+=== Процедуры диагностики
+
+[#connectivity-issues]
+==== Проблемы с подключением
+
+. *Проверить статус устройства* в Zabbix/Grafana dashboard
+. *Анализировать MQTT-логи* на предмет последней активности
+. *Верифицировать сетевую доступность*:
++
+nmap -p 8883 <device_ip>
+mosquitto_pub -h <broker> -t "device/status" -m "ping"
+
+. *При необходимости выполнить репартиционирование* в Zigbee сети
+
+[#performance-issues]
+==== Проблемы производительности
+
+*Высокая загрузка CPU*::
+- Проанализировать количество retained messages в MQTT
+- Проверить частоту публикации телеметрии
+
+*Проблемы с latency*::
+- Измерить RTT до AWS IoT Core
+- Проверить QoS levels в MQTT (использовать QoS 1 для critical commands)
+
+[#maintenance]
+=== Плановое обслуживание
+
+[#firmware-updates]
+==== Обновление прошивок
+
+[source,python]
+----
+# Скрипт массового обновления OTA
+import asyncio
+from device_manager import FirmwareManager
+
+async def batch_update(devices: List[str], fw_version: str):
+    async with FirmwareManager() as fm:
+        tasks = [fm.update(device, fw_version) for device in devices]
+        await asyncio.gather(*tasks, return_exceptions=True)
+----
+
+[#backup-procedures]
+==== Процедуры резервного копирования
+
+. *Конфигурация устройств*: Ежедневный экспорт в S3 bucket
+. *Пользовательские сценарии*: Репликация в standby регион
+. *База данных состояний*: Point-in-Time Recovery с retention 30 дней
+
+[#security]
+== Безопасность и доступ
+
+[#access-control]
+=== Управление доступом
+
+*RBAC модель*::
++
+Роли:
+
+viewer: только чтение телеметрии
+
+operator: управление устройствами + чтение
+
+admin: полный доступ + управление пользователями
+
+*API аутентификация*: JWT tokens с refresh механизмом
+
+[#security-audit]
+=== Аудит безопасности
+
+[source,sql]
+----
+-- Мониторинг подозрительной активности
+SELECT user_id, action, timestamp 
+FROM security_events 
+WHERE risk_score > 0.7 
+  AND timestamp > NOW() - INTERVAL '1 hour';
+----
+
+[#incident-response]
+=== Реагирование на инциденты
+
+. *Изоляция скомпрометированного устройства* через blacklist в IoT Policy
+. *Отзыв сертификатов* устройства в AWS IoT Core
+. *Уведомление пользователя* через push-уведомление
+
+[#troubleshooting]
+== Расширенное troubleshooting
+
+[#common-issues]
+=== Типичные проблемы и решения
+
+[#zigbee-network]
+==== Нестабильность Zigbee сети
+
+*Симптомы*: Высокий packet loss, частые disconnections
+*Решение*: 
+- Репозиционирование координатора
+- Анализ RF interference на каналах 11-26
+- Добавление Zigbee routers для улучшения mesh сети
+
+[#mqtt-issues]
+==== Проблемы с MQTT соединением
+
+*Диагностика*:
++
+[source,bash]
+----
+# Проверка качества соединения
+mqtt-bench --broker tcp://broker:1883 --count 100 --interval 10
+----
+
+*Решение*: Настройка keepalive interval и retry mechanism
+
+[#automation-issues]
+==== Сценарии не выполняются
+
+. Проверить правила в Rule Engine (AWS IoT Rules)
+. Верифицировать корректность IAM permissions
+. Анализировать CloudWatch Logs для Rule execution
+
+[#monitoring-alerts]
+== Мониторинг и алертинг
+
+[#critical-metrics]
+=== Ключевые метрики
+
+*Системные*::
+- CPU/Memory usage хаба
+- Количество активных MQTT соединений
+- Latency до cloud endpoints
+
+*Сетевые*::
+- Zigbee LQI (Link Quality Indicator)
+- Packet delivery ratio
+- Retransmission attempts
+
+[#alert-thresholds]
+=== Пороги срабатывания алертов
+
+[source,yaml]
+----
+alerts:
+  high_cpu:
+    condition: cpu_usage > 85%
+    duration: 5m
+    severity: warning
+    
+  network_partition:
+    condition: device_online_ratio < 0.95
+    duration: 2m
+    severity: critical
+----
+
+[#escalation-procedures]
+=== Процедуры эскалации
+
+. *Уровень 1*: Автоматический restart служб
+. *Уровень 2*: Уведомление on-call инженера
+. *Уровень 3*: Эскалация vendor support
+
+[#appendix]
+== Приложения
+
+[#api-reference]
+=== Справочник API
+
+[source]
+----
+Эндпоинты устройства:
+GET  /api/v1/devices/{id}/state
+POST /api/v1/devices/{id}/command
+PUT  /api/v1/devices/{id}/attributes
+
+Эндпоинты сценариев:
+POST /api/v1/automations/{id}/trigger
+GET  /api/v1/automations/{id}/executions
+----
+
+[#log-analysis]
+=== Анализ логов
+
+[source]
+----
+Ключевые log patterns:
+- "PERMIT_JOIN" - активация pairing mode
+- "DEVICE_INTERVIEW" - процесс подключения Zigbee устройства  
+- "STATE_UPDATE" - изменение состояния устройства
+- "RULE_TRIGGERED" - выполнение сценария автоматизации
+----
+
+// Концевая строка документа
+:revremark: Конфиденциально. Для внутреннего использования.
