@@ -11,8 +11,7 @@
 
 Ваш дом, который подстраивается под вас: одним касанием в приложении можно погасить свет, не вставая с кресла, удалённо удостовериться, что дома всё в порядке, и включить уютный сценарий к вашему приходу. Это не сюжет из будущего, а практическая реальность, которую приносит умный дом прямо в ваш смартфон.
 
-[float=left, width=3%] 
-image::https://github.com/unreadableonid/NewReadable/blob/master/attantion_icon.png[attantion_icon] 
+image::attantion_icon.png[attantion_icon, float=left, width=3%]
 Этот небольшой значок на экране вашего смартфона — это пульт управления всей жизнью вашего дома. Давайте разберемся, как извлечь из него максимум пользы.
 
 [#first-steps]
@@ -32,8 +31,7 @@ image::https://github.com/unreadableonid/NewReadable/blob/master/attantion_icon.
 +
 Зайдите в раздел «Добавить устройство», и приложение само найдет новые гаджеты в режиме сопряжения. Часто достаточно просто отсканировать QR-код на устройстве или его коробке.
 
-[float=left, width=3%] 
-image::https://github.com/unreadableonid/NewReadable/blob/master/attantion_icon.png[attantion_icon] 
+image::attantion_icon.png[attantion_icon, float=left, width=3%]
 Чтобы включить на устройстве режим сопряжения в ручную - прочтите инструкцию по эксплуатации вашего девайса
 
 [#tip]
