@@ -2,8 +2,7 @@
 
 Графический UseCase:
 
-[#img-UseCase,link=https://github.com/unreadableonid/NewReadable/blob/master/UseCaseMessanger.png] 
-image::UseCaseMessanger.png[UseCase]
+image::UseCaseMessanger.png[UseCaseMessanger]
 Рисунок 1. Диаграмма Use Case для версии 1.0 мессенджера "Придумать название"
 
 |===
